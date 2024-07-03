@@ -57,12 +57,14 @@ class BaseComponentSerializer(serializers.HyperlinkedModelSerializer):
         fields = "__all__"
 
     def __init__(self, *args, **kwargs):
+        specification = kwargs.pop("specification", None)
         super().__init__(*args, **kwargs)
-        self.specification = self.instance_specification or kwargs.pop("specification", None)
+
+        self.specification = self.instance_specification or specification
 
     @property
     def instance_specification(self):
-        if hasattr(self, "instance") and self.instance:
+        if hasattr(self, "instance") and isinstance(self.instance, Component):
             return self.instance.specification
         return None
 

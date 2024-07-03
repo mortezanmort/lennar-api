@@ -7,12 +7,33 @@ from core.viewmixins import NestedObjectMixin
 from core.viewsets import CreateListViewSet, RetrieveUpdateDestroyViewset
 
 from .models import Component, Group, Specification
-from .serializers import ComponentSerializer, GroupSerializer, PartCodeAssignmentSerializer, SpecificationSerializer
+from .serializers import (
+    ComponentSerializer,
+    GroupSerializer,
+    PartCodeAssignmentSerializer,
+    SpecificationCloneSerializer,
+    SpecificationSerializer,
+)
 
 
 class SpecificationViewSet(ModelViewSet):
     queryset = Specification.objects.all()
     serializer_class = SpecificationSerializer
+
+    @action(detail=True, methods=["post"], serializer_class=SpecificationCloneSerializer)
+    def clone(self, request, *args, **kwargs):
+        specification = self.get_object()
+        serializer = self.get_serializer(data=request.data, specification=specification)
+
+        if serializer.is_valid():
+            cloned_specification = serializer.clone()
+            specification_serializer = SpecificationSerializer(cloned_specification, context={"request": request})
+
+            return Response(
+                {"status": "Specification cloned successfully!", "cloned": specification_serializer.data},
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BaseNestedSpecificationViewSet(NestedObjectMixin, CreateListViewSet):
