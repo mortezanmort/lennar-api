@@ -121,7 +121,7 @@ class SpecificationCloneSerializer(serializers.Serializer):
             group.name: self.clone_group(group, cloned_specification) for group in self.specification.groups.all()
         }
         cloned_components = [
-            self.clone_component(component, cloned_groups[component.group.name], cloned_specification)
+            self.clone_component(component, cloned_groups[component.group.name], cloned_specification, include_parts)
             for component in self.specification.components.all()
         ]
         Group.objects.bulk_create(cloned_groups.values())
@@ -135,9 +135,11 @@ class SpecificationCloneSerializer(serializers.Serializer):
 
         return group
 
-    def clone_component(self, component, group, specification):
+    def clone_component(self, component, group, specification, include_parts):
         component.pk = None
         component.group = group
+        if not include_parts:
+            component.part_code = None
         component.specification = specification
 
         return component
