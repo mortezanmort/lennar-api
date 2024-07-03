@@ -47,16 +47,17 @@ python manage.py seed_data
 
 | Method | Endpoint                                                | View                                        | Name                            |
 |--------|---------------------------------------------------------|---------------------------------------------|---------------------------------|
-| GET    | /api/stuffs/                                            | rest_framework.routers.APIRootView          | api-root                        |
+| GET    | /api/stuffs/                                             | rest_framework.routers.APIRootView          | api-root                        |
 | GET    | /api/stuffs/components/\<pk\>/                            | stuffs.viewsets.ComponentViewSet            | component-detail                |
 | PATCH  | /api/stuffs/components/\<pk\>/assign_part/                | stuffs.viewsets.ComponentViewSet            | component-assign-part           |
 | GET    | /api/stuffs/groups/\<pk\>/                                | stuffs.viewsets.GroupViewSet                | group-detail                    |
-| GET    | /api/stuffs/specifications/                             | stuffs.viewsets.SpecificationViewSet        | specification-list              |
-| POST   | /api/stuffs/specifications/                             | stuffs.viewsets.SpecificationViewSet        | specification-list              |
+| GET    | /api/stuffs/specifications/                               | stuffs.viewsets.SpecificationViewSet        | specification-list              |
+| POST   | /api/stuffs/specifications/                               | stuffs.viewsets.SpecificationViewSet        | specification-list              |
 | GET    | /api/stuffs/specifications/\<pk\>/                        | stuffs.viewsets.SpecificationViewSet        | specification-detail            |
 | PUT    | /api/stuffs/specifications/\<pk\>/                        | stuffs.viewsets.SpecificationViewSet        | specification-detail            |
 | PATCH  | /api/stuffs/specifications/\<pk\>/                        | stuffs.viewsets.SpecificationViewSet        | specification-detail            |
 | DELETE | /api/stuffs/specifications/\<pk\>/                        | stuffs.viewsets.SpecificationViewSet        | specification-detail            |
+| POST    | /api/stuffs/specifications/\<pk\>/clone                  | stuffs.viewsets.SpecificationViewSet        | specification-detail            |
 | GET    | /api/stuffs/specifications/\<specification_pk\>/components/ | stuffs.viewsets.NestedSpecificationComponentsViewSet | specification-components-list  |
 | POST   | /api/stuffs/specifications/\<specification_pk\>/components/ | stuffs.viewsets.NestedSpecificationComponentsViewSet | specification-components-list  |
 | GET    | /api/stuffs/specifications/\<specification_pk\>/groups/   | stuffs.viewsets.NestedSpecificationGroupViewSet | specification-groups-list      |
