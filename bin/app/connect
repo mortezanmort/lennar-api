@@ -1,0 +1,6 @@
+#!/bin/bash -e
+USER=$1
+USER=${USER:=root}
+echo -e "== Connecting as $USER =="
+
+docker-compose exec -u $USER web /bin/bash
