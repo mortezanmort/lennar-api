@@ -1,0 +1,51 @@
+[
+    {
+        "model": "stuffs.specification",
+        "pk": 1,
+        "fields": {
+            "name": "Test Specification",
+            "code_number": "SPEC001",
+            "completed": false,
+            "status": "Planning Phase"
+        }
+    },
+    {
+        "model": "stuffs.specification",
+        "pk": 2,
+        "fields": {
+            "name": "Another Specification",
+            "code_number": "SPEC002",
+            "completed": false,
+            "status": "Planning Phase"
+        }
+    },
+    {
+        "model": "stuffs.group",
+        "pk": 1,
+        "fields": {
+            "name": "Test Group",
+            "group_code": "GRP001",
+            "specification": 1
+        }
+    },
+    {
+        "model": "stuffs.group",
+        "pk": 2,
+        "fields": {
+            "name": "Another Group",
+            "group_code": "GRP002",
+            "specification": 2
+        }
+    },
+    {
+        "model": "stuffs.component",
+        "pk": 1,
+        "fields": {
+            "name": "Test Component",
+            "description": "A test component",
+            "part_code": "",
+            "specification": 1,
+            "group": 1
+        }
+    }
+]
