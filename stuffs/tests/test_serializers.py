@@ -1,8 +1,7 @@
-from django.core.management import call_command
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
 
-from stuffs.models import Component, Group, Specification
+from stuffs.factories import ComponentFactory, GroupFactory, SpecificationFactory
 from stuffs.serializers import (
     ComponentSerializer,
     GroupSerializer,
@@ -12,110 +11,118 @@ from stuffs.serializers import (
 )
 
 
-class BaseTest(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        call_command("loaddata", "test_data.json")
+class SpecificationSerializerTest(TestCase):
+    def setUp(self):
+        self.specification = SpecificationFactory()
+        self.group = GroupFactory(specification=self.specification)
+        self.component = ComponentFactory(specification=self.specification, group=self.group)
 
-
-class SpecificationSerializerTest(BaseTest):
     def test_validate_completed(self):
-        specification = Specification.objects.get(pk=1)
-        serializer = SpecificationSerializer(specification, data={"completed": True}, partial=True)
+        self.specification.completed = True
+        serializer = SpecificationSerializer(self.specification, data={"completed": True}, partial=True)
         with self.assertRaises(ValidationError):
             serializer.is_valid(raise_exception=True)
 
     def test_validate_completed_with_parts(self):
-        component = Component.objects.get(pk=1)
-        component.part_code = "PART001"
-        component.save()
-        specification = Specification.objects.get(pk=1)
-        serializer = SpecificationSerializer(specification, data={"completed": True}, partial=True)
+        self.component.part_code = "PART001"
+        self.component.save()
+        serializer = SpecificationSerializer(self.specification, data={"completed": True}, partial=True)
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data["completed"], True)
 
     def test_validate_modification_of_completed_specification(self):
-        specification = Specification.objects.get(pk=1)
-        specification.completed = True
-        specification.save()
-        serializer = SpecificationSerializer(specification, data={"name": "New Name"}, partial=True)
+        self.specification.completed = True
+        self.specification.save()
+        serializer = SpecificationSerializer(self.specification, data={"name": "New Name"}, partial=True)
         with self.assertRaises(ValidationError):
             serializer.is_valid(raise_exception=True)
 
 
-class GroupSerializerTest(BaseTest):
+class GroupSerializerTest(TestCase):
+    def setUp(self):
+        self.specification = SpecificationFactory()
+        self.group = GroupFactory(specification=self.specification)
+
     def test_validate_name(self):
-        another_specification = Specification.objects.get(pk=2)
-        Group.objects.create(name="Test Group", group_code="GRP003", specification=another_specification)
-        specification = Specification.objects.get(pk=1)
-        serializer = GroupSerializer(data={"name": "Test Group", "group_code": "GRP004"}, specification=specification)
+        another_specification = SpecificationFactory()
+        GroupFactory(name="Test Group", specification=another_specification)
+        serializer = GroupSerializer(
+            data={"name": "Test Group", "group_code": "GRP004"}, specification=self.specification
+        )
         with self.assertRaises(ValidationError):
             serializer.is_valid(raise_exception=True)
 
     def test_validate_group_creation_in_completed_specification(self):
-        specification = Specification.objects.get(pk=1)
-        specification.completed = True
-        specification.save()
-        serializer = GroupSerializer(data={"name": "New Group", "group_code": "GRP003"}, specification=specification)
+        self.specification.completed = True
+        self.specification.save()
+        serializer = GroupSerializer(
+            data={"name": "New Group", "group_code": "GRP003"}, specification=self.specification
+        )
         with self.assertRaises(ValidationError):
             serializer.is_valid(raise_exception=True)
 
 
-class ComponentSerializerTest(BaseTest):
+class ComponentSerializerTest(TestCase):
+    def setUp(self):
+        self.specification = SpecificationFactory()
+        self.group = GroupFactory(specification=self.specification)
+        self.component = ComponentFactory(specification=self.specification, group=self.group)
+
     def test_validate_group(self):
-        specification = Specification.objects.get(pk=1)
-        Specification.objects.get(pk=2)
-        another_group = Group.objects.get(pk=2)
+        another_specification = SpecificationFactory()
+        another_group = GroupFactory(specification=another_specification)
         serializer = ComponentSerializer(
             data={
                 "name": "Component 1",
                 "description": "A test component",
                 "part_code": "PART002",
                 "group": another_group.id,
-            },
-            specification=specification,
+            }
         )
         with self.assertRaises(ValidationError):
             serializer.is_valid(raise_exception=True)
 
     def test_validate_component_creation_in_completed_specification(self):
-        specification = Specification.objects.get(pk=1)
-        specification.completed = True
-        specification.save()
-        group = Group.objects.get(pk=1)
+        self.specification.completed = True
+        self.specification.save()
         serializer = ComponentSerializer(
             data={
                 "name": "New Component",
                 "description": "A new component",
                 "part_code": "PART002",
-                "group": group.id,
-            },
-            specification=specification,
+                "group": self.group.id,
+            }
         )
         with self.assertRaises(ValidationError):
             serializer.is_valid(raise_exception=True)
 
 
-class PartCodeAssignmentSerializerTest(BaseTest):
+class PartCodeAssignmentSerializerTest(TestCase):
+    def setUp(self):
+        self.component = ComponentFactory(part_code="")
+
     def test_part_code_assignment(self):
-        component = Component.objects.get(pk=1)
-        serializer = PartCodeAssignmentSerializer(component, data={"part_code": "PART001"}, partial=True)
+        serializer = PartCodeAssignmentSerializer(self.component, data={"part_code": "PART001"}, partial=True)
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data["part_code"], "PART001")
 
 
-class SpecificationCloneSerializerTest(BaseTest):
+class SpecificationCloneSerializerTest(TestCase):
+    def setUp(self):
+        self.specification = SpecificationFactory()
+        self.group = GroupFactory(specification=self.specification)
+        self.component = ComponentFactory(specification=self.specification, group=self.group)
+
     def test_clone_specification(self):
-        specification = Specification.objects.get(pk=1)
         data = {"include_parts": True}
-        serializer = SpecificationCloneSerializer(data=data, specification=specification)
+        serializer = SpecificationCloneSerializer(data=data, specification=self.specification)
         self.assertTrue(serializer.is_valid())
         cloned_specification = serializer.clone()
 
-        self.assertNotEqual(cloned_specification.pk, specification.pk)
+        self.assertNotEqual(cloned_specification.pk, self.specification.pk)
         self.assertEqual(cloned_specification.status, "Design Phase")
-        self.assertEqual(cloned_specification.groups.count(), specification.groups.count())
-        self.assertEqual(cloned_specification.components.count(), specification.components.count())
+        self.assertEqual(cloned_specification.groups.count(), self.specification.groups.count())
+        self.assertEqual(cloned_specification.components.count(), self.specification.components.count())
 
     def test_validate_clone(self):
         data = {"include_parts": True}
