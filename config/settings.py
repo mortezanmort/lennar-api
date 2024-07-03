@@ -66,6 +66,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     # custom apps go here
+    "core.apps.CoreConfig",
     "stuffs.apps.StuffsConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -168,4 +169,9 @@ LOGGING = {
         }
     },
     "root": {"level": "INFO", "handlers": ["console"]},
+}
+
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
 }
