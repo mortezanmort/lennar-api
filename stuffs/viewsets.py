@@ -1,3 +1,5 @@
+import pandas as pd
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -47,6 +49,18 @@ class SpecificationViewSet(ModelViewSet):
             )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["get"])
+    def export_built_specification_report(self, request):
+        built_count = Specification.reports.built_count()
+        df = pd.DataFrame.from_records(built_count)
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="built_specifications_report.csv"'
+
+        df.to_csv(path_or_buf=response, index=False, header=["Specification Code", "Number of Built Specifications"])
+
+        return response
 
 
 class BaseNestedSpecificationViewSet(NestedObjectMixin, CreateListViewSet):
