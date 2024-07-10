@@ -145,3 +145,58 @@ class SpecificationCloneSerializer(serializers.Serializer):
         component.specification = specification
 
         return component
+
+
+class GroupImportSerializer(GroupSerializer):
+    components = ComponentSerializer(many=True)
+
+
+class SpecificationImportExportSerializer(SpecificationSerializer):
+    groups = GroupImportSerializer(many=True, required=False)
+
+
+class SpecificationImportSerializer(serializers.Serializer):
+    specifications = SpecificationImportExportSerializer(many=True)
+
+    def create(self, validated_data):
+        specifications_data = validated_data["specifications"]
+        created_specifications = []
+
+        for spec_data in specifications_data:
+            # Extract and pop the nested data for groups
+            groups_data = spec_data.pop("groups", [])
+
+            # Create the specification
+            specification = self.create_specification(spec_data)
+
+            # Create nested groups and components
+            self.create_groups(groups_data, specification)
+
+            created_specifications.append(specification)
+
+        return created_specifications
+
+    def create_specification(self, spec_data):
+        """Create a specification instance."""
+        return Specification.objects.create(**spec_data)
+
+    def create_groups(self, groups_data, specification):
+        """Create group instances and their nested components."""
+        for group_data in groups_data:
+            components_data = group_data.pop("components", [])
+            group = self.create_group(group_data, specification)
+
+            self.create_components(components_data, group, specification)
+
+    def create_group(self, group_data, specification):
+        """Create a group instance."""
+        group_serializer = GroupSerializer(data=group_data)
+        group_serializer.is_valid(raise_exception=True)
+
+        return group_serializer.save(specification=specification)
+
+    def create_components(self, components_data, group=None, specification=None):
+        """Create component instances."""
+        component_serializer = ComponentSerializer(data=components_data, many=True)
+        component_serializer.is_valid(raise_exception=True)
+        component_serializer.save(group=group, specification=specification)
